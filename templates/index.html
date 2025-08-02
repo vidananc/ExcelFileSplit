@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>Excel 拆分打印工具</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #333;
+      text-align: center;
+    }
+
+    form label {
+      display: block;
+      margin: 15px 0 5px;
+      color: #444;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #result {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #result p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Excel 拆分并调用 Bartender 打印</h2>
+
+    <form id="splitForm">
+      <label for="excelFile">Excel 文件：</label>
+      <input type="file" name="excelFile" id="excelFile" accept=".xls,.xlsx" required />
+
+      <label for="sheetName">Sheet 名称：</label>
+      <input type="text" name="sheetName" id="sheetName" value="大同市" required />
+
+      <label for="timeDelay">打印停留时间（秒）：</label>
+      <input type="number" name="timeDelay" id="timeDelay" value="3" min="0" />
+
+      <label>
+        <input type="checkbox" name="voice" id="voice" />
+        语音播报
+      </label>
+
+      <label for="outputPath">输出路径（可选）：</label>
+      <input type="text" name="outputPath" id="outputPath" placeholder="例如：D:/output" />
+
+      <button type="submit">开始拆分并打印</button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("splitForm");
+    const resultDiv = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      resultDiv.innerHTML = ""; // 清空旧结果
+
+      const formData = new FormData(form);
+      formData.set("voice", document.getElementById("voice").checked); // checkbox 转布尔
+
+      try {
+        const response = await fetch("http://localhost:8080/file/split", {
+          method: "POST",
+          body: formData,
+        });
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "result.zip"; // 可根据后端响应动态设定
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      resultDiv.innerHTML = `<p style="color:green;">成功</p>`;
+    } catch (err) {
+      console.error(err);
+      resultDiv.innerHTML = `<p style="color:red;">请求错误：${err.message}</p>`;
+    }
+    });
+  </script>
+  
+</body>
+</html>
